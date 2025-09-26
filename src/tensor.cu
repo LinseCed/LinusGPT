@@ -36,5 +36,19 @@ void Tensor::fill(float value) {
         size_t size = rows * cols;
         int threads = 256;
         int blocks = (size + threads - 1) / threads;
+        fill_kernel<<<blocks, threads>>>(d_data, value, size);
+        cudaDeviceSynchronize();
+        cudaMemcpy(data, d_data, size*sizeof(float), cudaMemcpyDeviceToHost);
+    } else {
+        fill_cpu(value);
+    }
+}
+
+void Tensor::print() const {
+    for (size_t i = 0; i < rows; i++) {
+        for (size_t j = 0; j < cols; j++) {
+            std::cout << data[i * cols + j] << " ";
+        } 
+        std::cout << "\n";
     }
 }
