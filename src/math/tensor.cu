@@ -1,4 +1,4 @@
-#include "tensor.h"
+#include "math/tensor.h"
 #include <cuda_runtime.h>
 #include <iostream>
 #include <random>
@@ -30,9 +30,6 @@ Tensor::Tensor(size_t rows, size_t cols) : rows(rows), cols(cols), d_data(nullpt
     use_gpu = (err == cudaSuccess && deviceCount > 0);
     if (use_gpu) {
         cudaMalloc(&d_data, rows * cols * sizeof(float));
-        std::cout << "Using GPU\n";
-    } else {
-        std::cout << "Using CPU\n";
     }
 }
 
