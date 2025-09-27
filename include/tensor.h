@@ -9,13 +9,18 @@ public:
     ~Tensor();
 
     void fill(float value);
+    void randomize();
     void print() const;
+    
+    static Tensor matmul(const Tensor& A, const Tensor& B);
 
-private:
     size_t rows, cols;
+    bool use_gpu;
+    static Tensor matmul_cpu(const Tensor& A, const Tensor& B);
+    static Tensor matmul_gpu(const Tensor& A, const Tensor& B);
+private:
     float* data;
     float* d_data;
-    bool use_gpu;
 
     void fill_cpu(float value);
 };
