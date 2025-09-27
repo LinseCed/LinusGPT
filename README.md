@@ -3,8 +3,9 @@
 
 ## Installation
 You can build the project with make
+
 ```bash
-make
+make MODE=release
 ```
 
 ## Prerequisites
