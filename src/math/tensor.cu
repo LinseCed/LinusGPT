@@ -22,6 +22,15 @@ __global__ void matmul_kernel(const float* A, const float* B, float* C, size_t M
     }
 }
 
+__global__ void matadd_kernel(const float* A, const float* B, float* C, size_t rows, size_t cols) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    
+    if (row < rows && col < cols) {
+        C[row * cols + col] = A[row * cols + col] + B[row * cols + col];
+    }
+}
+
 Tensor::Tensor(size_t rows, size_t cols) : rows(rows), cols(cols), d_data(nullptr) {
     data = new float[rows * cols];
 
@@ -94,10 +103,10 @@ Tensor Tensor::matmul_gpu(const Tensor& A, const Tensor& B) {
     Tensor C(A.rows, B.cols);
 
     dim3 threads(16, 16);
-    dim3 blocks((B.cols + threads.x - 1) / threads.x, (A.rows + threads.y - 1) / threads.y);
+    dim3 blocks((C.cols + threads.x - 1) / threads.x, (C.rows + threads.y - 1) / threads.y);
 
     matmul_kernel<<<blocks, threads>>>(A.d_data, B.d_data, C.d_data, A.rows, B.cols, A.cols);
-    cudaMemcpy(C.data, C.d_data, A.rows * B.cols * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(C.data, C.d_data, C.rows * C.cols * sizeof(float), cudaMemcpyDeviceToHost);
     return C;
 }
 
@@ -107,5 +116,35 @@ Tensor Tensor::matmul(const Tensor& A, const Tensor& B) {
         return matmul_gpu(A, B);
     } else {
         return matmul_cpu(A, B);
+    }
+}
+
+Tensor Tensor::matadd_cpu(const Tensor& A, const Tensor& B) {
+    Tensor C(A.rows, A.cols);
+    for (size_t i = 0; i < A.rows; i++) {
+        for (size_t j = 0; j < A.cols; j++) {
+            C.data[i * A.cols + j] = A.data[i * A.cols + j] + B.data[i * A.cols + j];
+        }
+    }
+    return C;
+}
+
+Tensor Tensor::matadd_gpu(const Tensor& A, const Tensor& B) {
+    Tensor C(A.rows, A.cols);
+    
+    dim3 threads(16, 16);
+    dim3 blocks((A.cols + threads.x - 1) / threads.x, (A.rows + threads.y - 1) / threads.y);
+    
+    matadd_kernel<<<blocks, threads>>>(A.d_data, B.d_data, C.d_data, A.rows, A.cols);
+    cudaMemcpy(C.data, C.d_data, C.rows * C.cols * sizeof(float), cudaMemcpyDeviceToHost);
+
+    return C;
+}
+Tensor Tensor::matadd(const Tensor& A, const Tensor& B) {
+    if (A.rows != B.rows || A.cols != B.cols) throw std::runtime_error("Matrix size mismatch");
+    if (A.use_gpu && B.use_gpu) {
+        return matadd_gpu(A, B);
+    } else {
+        return matadd_cpu(A, B);
     }
 }
