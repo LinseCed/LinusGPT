@@ -13,14 +13,18 @@ public:
     void print() const;
     
     static Tensor matmul(const Tensor& A, const Tensor& B);
+    static Tensor matadd(const Tensor& A, const Tensor& B);
 
     size_t rows, cols;
     bool use_gpu;
-    static Tensor matmul_cpu(const Tensor& A, const Tensor& B);
-    static Tensor matmul_gpu(const Tensor& A, const Tensor& B);
 private:
     float* data;
     float* d_data;
 
     void fill_cpu(float value);
+    
+    static Tensor matmul_cpu(const Tensor& A, const Tensor& B);
+    static Tensor matmul_gpu(const Tensor& A, const Tensor& B);
+    static Tensor matadd_cpu(const Tensor& A, const Tensor& B);
+    static Tensor matadd_gpu(const Tensor& A, const Tensor& B);
 };
