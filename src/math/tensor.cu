@@ -3,6 +3,7 @@
 #include <iostream>
 #include <random>
 #include <chrono>
+#include <cmath>
 
 __global__ void fill_kernel(float* data, float value, size_t size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -65,10 +66,13 @@ void Tensor::fill(float value) {
 }
 
 void Tensor::randomize() {
-    std::mt19937 rng(42);
-    std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
+    float std_dev = std::sqrt(0.2f / rows);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::normal_distribution<float> dist(0.0f, std_dev);
+    
     for (size_t i = 0; i < rows * cols; i++) {
-        data[i] = dist(rng);
+        data[i] = dist(gen);
     }
 
     if (use_gpu) {
