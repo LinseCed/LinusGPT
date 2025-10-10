@@ -2,10 +2,12 @@
 
 
 ## Installation
-You can build the project with make
+You can build the project with cmake
 
 ```bash
-make MODE=release
+mkdir build && cd build
+cmake ../CMakeLists.txt
+make
 ```
 
 ## Prerequisites
