@@ -48,10 +48,6 @@ Tensor::~Tensor() {
     if (use_gpu) cudaFree(d_data);
 }
 
-void Tensor::fill_cpu(float value) {
-    for (size_t i = 0; i < rows * cols; i++) data[i] = value;
-}
-
 void Tensor::fill(float value) {
     if (use_gpu) {
         size_t size = rows * cols;
@@ -60,9 +56,6 @@ void Tensor::fill(float value) {
         fill_kernel<<<blocks, threads>>>(d_data, value, size);
         cudaDeviceSynchronize();
         cudaMemcpy(data, d_data, size*sizeof(float), cudaMemcpyDeviceToHost);
-    } else {
-        fill_cpu(value);
-    }
 }
 
 void Tensor::randomize() {
@@ -89,21 +82,8 @@ void Tensor::print() const {
     }
 }
 
-Tensor Tensor::matmul_cpu(const Tensor& A, const Tensor& B) {
-    Tensor C(A.rows, B.cols);
-    for (size_t i = 0; i < A.rows; i++) {
-        for (size_t j = 0; j < B.cols; j++) {
-            float sum = 0.0f;
-            for (size_t k = 0; k < A.cols; k++) {
-                sum += A.data[i * A.cols + k] * B.data[k * B.cols + j];
-            }
-            C.data[i * B.cols + j] = sum;
-        }
-    }
-    return C;
-}
-
-Tensor Tensor::matmul_gpu(const Tensor& A, const Tensor& B) {
+Tensor Tensor::matmul(const Tensor& A, const Tensor& B) {
+    if (A.cols != B.rows) throw std::runtime_error("Matrix size mismatch");
     Tensor C(A.rows, B.cols);
 
     dim3 threads(16, 16);
@@ -114,26 +94,8 @@ Tensor Tensor::matmul_gpu(const Tensor& A, const Tensor& B) {
     return C;
 }
 
-Tensor Tensor::matmul(const Tensor& A, const Tensor& B) {
-    if (A.cols != B.rows) throw std::runtime_error("Matrix size mismatch");
-    if (A.use_gpu && B.use_gpu) {
-        return matmul_gpu(A, B);
-    } else {
-        return matmul_cpu(A, B);
-    }
-}
-
-Tensor Tensor::matadd_cpu(const Tensor& A, const Tensor& B) {
-    Tensor C(A.rows, A.cols);
-    for (size_t i = 0; i < A.rows; i++) {
-        for (size_t j = 0; j < A.cols; j++) {
-            C.data[i * A.cols + j] = A.data[i * A.cols + j] + B.data[i * A.cols + j];
-        }
-    }
-    return C;
-}
-
-Tensor Tensor::matadd_gpu(const Tensor& A, const Tensor& B) {
+Tensor Tensor::matadd(const Tensor& A, const Tensor& B) {
+    if (A.rows != B.rows || A.cols != B.cols) throw std::runtime_error("Matrix size mismatch");
     Tensor C(A.rows, A.cols);
     
     dim3 threads(16, 16);
@@ -141,14 +103,5 @@ Tensor Tensor::matadd_gpu(const Tensor& A, const Tensor& B) {
     
     matadd_kernel<<<blocks, threads>>>(A.d_data, B.d_data, C.d_data, A.rows, A.cols);
     cudaMemcpy(C.data, C.d_data, C.rows * C.cols * sizeof(float), cudaMemcpyDeviceToHost);
-
     return C;
-}
-Tensor Tensor::matadd(const Tensor& A, const Tensor& B) {
-    if (A.rows != B.rows || A.cols != B.cols) throw std::runtime_error("Matrix size mismatch");
-    if (A.use_gpu && B.use_gpu) {
-        return matadd_gpu(A, B);
-    } else {
-        return matadd_cpu(A, B);
-    }
 }
