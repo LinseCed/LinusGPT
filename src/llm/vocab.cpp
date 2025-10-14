@@ -14,7 +14,7 @@ Vocab& Vocab::getInstance() {
 
 Vocab::Vocab() {
     trieRoot = new TrieNode();
-    readVocabFromFile("llmmodel.vocab");
+    readVocabFromFile("resources/llmmodel.vocab");
 }
 
 void Vocab::readVocabFromFile(const std::string& filename) {

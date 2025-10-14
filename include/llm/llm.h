@@ -4,5 +4,5 @@ class LLM {
 public:
     LLM(int vocabSize, int dim, int numBlocks, int numHeads, int ffDim);
 
-    Tensor forward(int[] input);
-}
+    Tensor forward(int[]);
+};

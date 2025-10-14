@@ -14,5 +14,6 @@ make
 
 * CUDA-capable NVIDIA GPU (single thread CPU fallback available, propably to slow)
 * g++
+* cmake
 * make
 * CUDA Toolkit
