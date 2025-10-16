@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
-project(llm LANGUAGES CXX)
+project(llm LANGUAGES CXX CUDA)
 
 # === Options ===
 option(USE_CUDA "Enable CUDA support" ON)
