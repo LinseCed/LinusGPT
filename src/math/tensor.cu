@@ -1,9 +1,12 @@
 #include "math/tensor.h"
-#include <cuda_runtime.h>
 #include <iostream>
 #include <random>
 #include <chrono>
 #include <cmath>
+
+#ifdef USE_CUDA
+#include <cuda_runtime.h>
+bool use_gpu = false;
 
 __global__ void fill_kernel(float* data, float value, size_t size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -53,9 +56,10 @@ void Tensor::fill(float value) {
         size_t size = rows * cols;
         int threads = 256;
         int blocks = (size + threads - 1) / threads;
-        fill_kernel<<<blocks, threads>>>(d_data, value, size);
+        fill_kernel << <blocks, threads >> > (d_data, value, size);
         cudaDeviceSynchronize();
-        cudaMemcpy(data, d_data, size*sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(data, d_data, size * sizeof(float), cudaMemcpyDeviceToHost);
+    }
 }
 
 void Tensor::randomize() {
@@ -105,3 +109,4 @@ Tensor Tensor::matadd(const Tensor& A, const Tensor& B) {
     cudaMemcpy(C.data, C.d_data, C.rows * C.cols * sizeof(float), cudaMemcpyDeviceToHost);
     return C;
 }
+#endif

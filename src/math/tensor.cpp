@@ -2,6 +2,7 @@
 #include <random>
 #include <thread>
 
+#ifndef USE_CUDA
 Tensor::Tensor(size_t rows, size_t cols) : rows(rows), cols(cols), d_data(nullptr) {
     data = new float[rows * cols];
 }
@@ -72,3 +73,4 @@ Tensor Tensor::matadd(const Tensor& A, const Tensor& B) {
     }
     return C;
 }
+#endif

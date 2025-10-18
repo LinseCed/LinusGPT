@@ -18,7 +18,5 @@ public:
     size_t rows, cols;
 private:
     float* data;
-    float* d_data;
-
-    void fill_cpu(float value);   
+    float* d_data; 
 };

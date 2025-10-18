@@ -30,7 +30,9 @@ if(USE_CUDA)
         enable_language(CUDA)
         message(STATUS "CUDA compiler found: ${CMAKE_CUDA_COMPILER}")
         add_definitions(-DUSE_CUDA)
+        list(REMOVE_ITEM SOURCES "${PROJECT_SOURCE_DIR}/src/math/tensor.cpp")
         list(APPEND SOURCES ${SRC_CU})
+        set_source_files_properties(${SRC_CU} PROPERTIES LANGUAGE CUDA)
     else()
         message(WARNING "CUDA not found! Building CPU-only version.")
         set(USE_CUDA OFF)
@@ -42,16 +44,31 @@ add_executable(llm ${SOURCES})
 
 # === Compiler flags ===
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_options(llm PRIVATE
-        $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -g -O0>
-        $<$<COMPILE_LANGUAGE:CUDA>:-G -g -O0>
-    )
+    if(MSVC)
+        target_compile_options(llm PRIVATE
+            $<$<COMPILE_LANGUAGE:CXX>:/W4 /EHsc /Zi /Od /RTC1>
+            $<$<COMPILE_LANGUAGE:CUDA>:-G -g -O0>
+        )
+    else()
+        target_compile_options(llm PRIVATE
+            $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -g -O0>
+            $<$<COMPILE_LANGUAGE:CUDA>:-G -g -O0>
+        )
+    endif()
 else()
-    target_compile_options(llm PRIVATE
-        $<$<COMPILE_LANGUAGE:CXX>:-O3 -march=native -s>
-        $<$<COMPILE_LANGUAGE:CUDA>:-O3 -Xcompiler=-s>
-    )
+    if(MSVC)
+        target_compile_options(llm PRIVATE
+            $<$<COMPILE_LANGUAGE:CXX>:/O2 /EHsc>
+            $<$<COMPILE_LANGUAGE:CUDA>:-O3>
+        )
+    else()
+        target_compile_options(llm PRIVATE
+            $<$<COMPILE_LANGUAGE:CXX>:-O3 -march=native -s>
+            $<$<COMPILE_LANGUAGE:CUDA>:-O3 -Xcompiler=-s>
+        )
+    endif()
 endif()
+
 
 # === CUDA-specific settings ===
 if(USE_CUDA)
