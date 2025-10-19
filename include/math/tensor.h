@@ -5,6 +5,7 @@
 
 class Tensor {
 public:
+    Tensor();
     Tensor(size_t rows, size_t cols);
     ~Tensor();
 

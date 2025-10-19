@@ -3,6 +3,8 @@
 #include <thread>
 
 #ifndef USE_CUDA
+Tensor::Tensor() : Tensor(0, 0) {}
+
 Tensor::Tensor(size_t rows, size_t cols) : rows(rows), cols(cols), d_data(nullptr) {
     data = new float[rows * cols];
 }

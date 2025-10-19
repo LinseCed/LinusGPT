@@ -39,3 +39,14 @@
 
 # debug information files
 *.dwo
+
+# Visual Studio and CMAKE
+/.vs
+/LinusGPT/x64
+/out/build
+/CMakeSettings.json
+/CppProperties.json
+/LinusGPT.sln
+/LinusGPT.vcxproj
+/LinusGPT.vcxproj.filters
+/LinusGPT.vcxproj.user
