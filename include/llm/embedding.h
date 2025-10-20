@@ -5,8 +5,8 @@
 class Embedding {
 public:
     Embedding(int vocabSize, int dim);
-    Tensor& forward(int* input, size_t inputSize, Vocab& vocab);
+    Tensor forward(std::vector<int> input, Vocab& vocab);
 private:
     Tensor weight, gradWeight;
-    int input[];
+    std::vector<int> input;
 };

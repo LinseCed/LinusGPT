@@ -13,8 +13,45 @@ Tensor::~Tensor() {
     delete[] data;
 }
 
+Tensor::Tensor(const Tensor& other) : rows(other.rows), cols(other.cols) {
+    data = new float[rows * cols];
+    std::copy(other.data, other.data + rows * cols, data);
+}
+
+Tensor& Tensor::operator=(const Tensor& other) {
+    if (this == &other) return *this;
+    delete[] data;
+
+    rows = other.rows;
+    cols = other.cols;
+
+    data = new float[rows * cols];
+    std::copy(other.data, other.data + rows * cols, data);
+    return *this;
+}
+
+Tensor::Tensor(Tensor&& other) noexcept : rows(other.rows), cols(other.cols), data(other.data) {
+    other.data = nullptr;
+    other.rows = 0;
+    other.cols = 0;
+}
+
+Tensor& Tensor::operator=(Tensor&& other) noexcept {
+    if (this != &other) {
+        delete[] data;
+        rows = other.rows;
+        cols = other.cols;
+        data = other.data;
+
+        other.data = nullptr;
+        other.rows = 0;
+        other.cols = 0;
+    }
+    return *this;
+}
+
 void Tensor::fill(float value) {
-    for (size_t i = 0; i < rows * cols; i++) data[i] = value;
+    std::fill(data, data + rows * cols, value);
 }
 
 void Tensor::randomize() {
@@ -23,9 +60,7 @@ void Tensor::randomize() {
     std::mt19937 gen(rd());
     std::normal_distribution<float> dist(0.0f, std_dev);
     
-    for (size_t i = 0; i < rows * cols; i++) {
-        data[i] = dist(gen);
-    }
+    for (size_t i = 0; i < rows * cols; i++) data[i] = dist(gen);
 }
 
 void Tensor::print() const {
@@ -38,6 +73,8 @@ void Tensor::print() const {
 }
 
 Tensor Tensor::matmul(const Tensor& A, const Tensor& B) {
+    if (A.cols != B.rows) throw new std::runtime_error("Matrix size mismatch");
+
     Tensor C(A.rows, B.cols);
     auto worker = [&](size_t start_row, size_t end_row) {
         for (size_t i = start_row; i < end_row; i++) {
@@ -52,13 +89,15 @@ Tensor Tensor::matmul(const Tensor& A, const Tensor& B) {
     };
 
     size_t num_threads = std::thread::hardware_concurrency();
-    size_t rows_per_thread = A.rows / num_threads;
+    num_threads = num_threads == 0 ? 4 : num_threads;
+    size_t rows_per_thread = (A.rows + num_threads - 1)/ num_threads;
+    
     std::vector<std::thread> threads;
-
     for (size_t t = 0; t < num_threads; t++) {
         size_t start = t * rows_per_thread;
-        size_t end = (t == num_threads - 1) ? A.rows : start + rows_per_thread;
-        threads.emplace_back(worker, start, end);
+        size_t end = std::min(start + rows_per_thread, A.rows);
+        if (start < end)
+            threads.emplace_back(worker, start, end);
     }
 
     for (auto& th : threads) th.join();
@@ -67,12 +106,24 @@ Tensor Tensor::matmul(const Tensor& A, const Tensor& B) {
 
 
 Tensor Tensor::matadd(const Tensor& A, const Tensor& B) {
+    if (A.rows != B.rows || A.cols != B.cols) throw std::runtime_error("Matrix size mismatch");
     Tensor C(A.rows, A.cols);
-    for (size_t i = 0; i < A.rows; i++) {
-        for (size_t j = 0; j < A.cols; j++) {
-            C.data[i * A.cols + j] = A.data[i * A.cols + j] + B.data[i * A.cols + j];
-        }
+    auto worker = [&](size_t start, size_t end) {
+        for (size_t i = start; i < end; i++)
+            C.data[i] = A.data[i] + B.data[i];
+    };
+    size_t total = A.rows * A.cols;
+    size_t num_threads = std::thread::hardware_concurrency();
+    num_threads = num_threads == 0 ? 4 : num_threads;
+    size_t chunk = (total + num_threads - 1) / num_threads;
+
+    std::vector<std::thread> threads;
+    for (size_t t = 0; t < num_threads; t++) {
+        size_t start = t * chunk;
+        size_t end = std::min(start + chunk, total);
+        if (start < end) threads.emplace_back(worker, start, end);
     }
+    for (auto& th : threads) th.join();
     return C;
 }
 #endif

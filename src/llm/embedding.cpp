@@ -5,7 +5,12 @@ Embedding::Embedding(int vocabSize, int dim) : weight(vocabSize, dim), gradWeigh
 	gradWeight.fill(0);
 }
 
-Tensor& Embedding::forward(int* input, size_t inputSize, Vocab& vocab) {
-	weight.print();
-	return weight;
+Tensor Embedding::forward(std::vector<int> input, Vocab& vocab) {
+	this->input = input;
+	int n = input.size();
+	Tensor out(n, weight.cols);
+	for (int i = 0; i < n; i++) {
+		// TODO setRow function on Tensor
+	}
+	return out;
 }
