@@ -3,6 +3,7 @@ project(llm LANGUAGES CXX CUDA)
 
 # === Options ===
 option(USE_CUDA "Enable CUDA support" ON)
+option(FORCE_CPU "Force CPU-only build even if CUDA is available" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -23,7 +24,7 @@ file(GLOB_RECURSE SRC_CU  CONFIGURE_DEPENDS src/*.cu)
 set(SOURCES ${SRC_CPP})
 
 # === Try to find CUDA if enabled ===
-if(USE_CUDA)
+if(USE_CUDA AND NOT FORCE_CPU)
     include(CheckLanguage)
     check_language(CUDA)
     if(CMAKE_CUDA_COMPILER)
@@ -37,6 +38,13 @@ if(USE_CUDA)
         message(WARNING "CUDA not found! Building CPU-only version.")
         set(USE_CUDA OFF)
     endif()
+else()
+    if(FORCE_CPU)
+        message(STATUS "FORCE_CPU is ON: Building CPU-only version")
+    else()
+        message(STATUS "CUDA disabled: Building CPU-only version")
+    endif()
+    set(USE_CUDA OFF)
 endif()
 
 # === Target ===
