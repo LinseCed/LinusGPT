@@ -182,4 +182,12 @@ Tensor Tensor::matadd(const Tensor& A, const Tensor& B) {
     }
     return C;
 }
+
+void Tensor::setRow(int row, std::vector<float>& values) {
+	if (row >= rows) throw std::out_of_range("Row index out of range");
+	if (values.size() != cols) throw std::invalid_argument("Values size mismatch");
+	float* dest = data + row * cols;
+	cudaError_t err = cudaMemcpy(dest, values.data(), cols * sizeof(float), cudaMemcpyHostToDevice);
+	if (err != cudaSuccess) throw std::runtime_error(std::string("CUDA memcpy failed") + cudaGetErrorString(err));
+}
 #endif

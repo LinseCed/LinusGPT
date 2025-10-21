@@ -25,5 +25,10 @@ public:
     static Tensor matmul(const Tensor& A, const Tensor& B);
     static Tensor matadd(const Tensor& A, const Tensor& B);
 
+    void setRow(int row, std::vector<float>& values);
+
+	size_t getRows() const { return rows; }
+	size_t getCols() const { return cols; }
+private:
     size_t rows, cols;
 };

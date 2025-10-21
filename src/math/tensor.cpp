@@ -104,7 +104,6 @@ Tensor Tensor::matmul(const Tensor& A, const Tensor& B) {
     return C;
 }
 
-
 Tensor Tensor::matadd(const Tensor& A, const Tensor& B) {
     if (A.rows != B.rows || A.cols != B.cols) throw std::runtime_error("Matrix size mismatch");
     Tensor C(A.rows, A.cols);
@@ -125,5 +124,11 @@ Tensor Tensor::matadd(const Tensor& A, const Tensor& B) {
     }
     for (auto& th : threads) th.join();
     return C;
+}
+
+void Tensor::setRow(int row, std::vector<float>& values) {
+	if (rows >= row) throw std::out_of_range("Row index out of range");
+    if (values.size() != cols) throw std::runtime_error("Row size mismatch");
+    std::copy(values.begin(), values.end(), data + row * cols);
 }
 #endif
