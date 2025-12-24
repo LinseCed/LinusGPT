@@ -190,4 +190,10 @@ void Tensor::setRow(int row, std::vector<float>& values) {
 	cudaError_t err = cudaMemcpy(dest, values.data(), cols * sizeof(float), cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) throw std::runtime_error(std::string("CUDA memcpy failed") + cudaGetErrorString(err));
 }
+
+float Tensor::get(size_t row, size_t col) const {
+    if (row >= rows) throw std::out_of_range("Row index out of range");
+    if (col >= cols) throw std::out_of_range("Col index out of range");
+    return data[row * cols + col];
+}
 #endif

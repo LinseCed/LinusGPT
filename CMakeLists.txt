@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.18)
-project(llm LANGUAGES CXX CUDA)
+project(llm LANGUAGES CXX)
 
 # === Options ===
-option(USE_CUDA "Enable CUDA support" ON)
-option(FORCE_CPU "Force CPU-only build even if CUDA is available" OFF)
+option(USE_CUDA "Enable CUDA support" OFF)
+option(FORCE_CPU "Force CPU-only build even if CUDA is available" ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -20,8 +20,9 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 # === Source discovery ===
 file(GLOB_RECURSE SRC_CPP CONFIGURE_DEPENDS src/*.cpp)
 file(GLOB_RECURSE SRC_CU  CONFIGURE_DEPENDS src/*.cu)
+file(GLOB_RECURSE SRC_HPP CONFIGURE_DEPENDS include/*.h)
 
-set(SOURCES ${SRC_CPP})
+set(SOURCES ${SRC_CPP} ${SRC_HPP} ${SRC_CU})
 
 # === Try to find CUDA if enabled ===
 if(USE_CUDA AND NOT FORCE_CPU)

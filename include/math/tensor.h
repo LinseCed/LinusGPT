@@ -1,5 +1,4 @@
 #pragma once
-#include <cstddef>
 #include <vector>
 #include <iostream>
 
@@ -27,8 +26,10 @@ public:
 
     void setRow(int row, std::vector<float>& values);
 
-	size_t getRows() const { return rows; }
-	size_t getCols() const { return cols; }
+    [[nodiscard]] float get(size_t row, size_t col) const;
+
+	[[nodiscard]] size_t getRows() const { return rows; }
+	[[nodiscard]] size_t getCols() const { return cols; }
 private:
     size_t rows, cols;
 };
