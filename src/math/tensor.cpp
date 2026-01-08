@@ -5,7 +5,7 @@
 #ifndef USE_CUDA
 Tensor::Tensor() : Tensor(0, 0) {}
 
-Tensor::Tensor(size_t rows, size_t cols) : rows(rows), cols(cols) {
+Tensor::Tensor(const size_t rows, const size_t cols) : rows(rows), cols(cols) {
     data = new float[rows * cols];
 }
 
@@ -14,8 +14,11 @@ Tensor::~Tensor() {
 }
 
 Tensor::Tensor(const Tensor& other) : rows(other.rows), cols(other.cols) {
+    if(other.data != nullptr) {
+        throw std::runtime_error("Tensor::Tensor(): other.data is null");
+    }
     data = new float[rows * cols];
-    std::copy(other.data, other.data + rows * cols, data);
+    std::copy_n(other.data, rows * cols, data);
 }
 
 Tensor& Tensor::operator=(const Tensor& other) {
@@ -26,14 +29,14 @@ Tensor& Tensor::operator=(const Tensor& other) {
     cols = other.cols;
 
     data = new float[rows * cols];
-    std::copy(other.data, other.data + rows * cols, data);
+    std::copy_n(other.data, rows * cols, data);
     return *this;
 }
 
-Tensor::Tensor(Tensor&& other) noexcept : rows(other.rows), cols(other.cols), data(other.data) {
-    other.data = nullptr;
+Tensor::Tensor(Tensor&& other) noexcept : data(other.data), rows(other.rows), cols(other.cols) {
     other.rows = 0;
     other.cols = 0;
+    other.data = nullptr;
 }
 
 Tensor& Tensor::operator=(Tensor&& other) noexcept {
@@ -50,12 +53,12 @@ Tensor& Tensor::operator=(Tensor&& other) noexcept {
     return *this;
 }
 
-void Tensor::fill(float value) {
-    std::fill(data, data + rows * cols, value);
+void Tensor::fill(const float value) const {
+    std::fill_n(data, rows * cols, value);
 }
 
-void Tensor::randomize() {
-    float std_dev = std::sqrt(0.2f / rows);
+void Tensor::randomize() const {
+    const float std_dev = std::sqrt(0.2f / static_cast<float>(rows));
     std::random_device rd;
     std::mt19937 gen(rd());
     std::normal_distribution<float> dist(0.0f, std_dev);
@@ -73,10 +76,10 @@ void Tensor::print() const {
 }
 
 Tensor Tensor::matmul(const Tensor& A, const Tensor& B) {
-    if (A.cols != B.rows) throw new std::runtime_error("Matrix size mismatch");
+    if (A.cols != B.rows) throw std::runtime_error("Matrix size mismatch");
 
     Tensor C(A.rows, B.cols);
-    auto worker = [&](size_t start_row, size_t end_row) {
+    auto worker = [&](const size_t start_row, const size_t end_row) {
         for (size_t i = start_row; i < end_row; i++) {
             for (size_t j = 0; j < B.cols; j++) {
                 float sum = 0.0;
@@ -107,7 +110,7 @@ Tensor Tensor::matmul(const Tensor& A, const Tensor& B) {
 Tensor Tensor::matadd(const Tensor& A, const Tensor& B) {
     if (A.rows != B.rows || A.cols != B.cols) throw std::runtime_error("Matrix size mismatch");
     Tensor C(A.rows, A.cols);
-    auto worker = [&](size_t start, size_t end) {
+    auto worker = [&](const size_t start, const size_t end) {
         for (size_t i = start; i < end; i++)
             C.data[i] = A.data[i] + B.data[i];
     };
@@ -126,13 +129,13 @@ Tensor Tensor::matadd(const Tensor& A, const Tensor& B) {
     return C;
 }
 
-void Tensor::setRow(int row, std::vector<float>& values) {
+void Tensor::setRow(const size_t row, const std::vector<float>& values) const {
 	if (rows >= row) throw std::out_of_range("Row index out of range");
     if (values.size() != cols) throw std::runtime_error("Row size mismatch");
-    std::copy(values.begin(), values.end(), data + row * cols);
+    std::ranges::copy(values, data + row * cols);
 }
 
-float Tensor::get(size_t row, size_t col) const {
+float Tensor::get(const size_t row, const size_t col) const {
     if (row >= rows) throw std::out_of_range("Row index out of range");
     if (col >= cols) throw std::out_of_range("Col index out of range");
     return data[row * cols + col];

@@ -8,11 +8,11 @@ class Vocab {
 public:
     static Vocab& getInstance();
 
-    int getVocabSize() const;
-    const std::vector<std::string>& getVocab() const;
+    [[nodiscard]] int getVocabSize() const;
+    [[nodiscard]] const std::vector<std::string>& getVocab() const;
 
-    std::vector<std::string> tokenize(const std::string& text) const;
-    std::vector<int> encode(const std::string& text) const;
+    [[nodiscard]] std::vector<std::string> tokenize(const std::string& text) const;
+    [[nodiscard]] std::vector<int> encode(const std::string& text) const;
 private:
     Vocab();
     void readVocabFromFile(const std::string& filename);

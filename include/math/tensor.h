@@ -17,14 +17,14 @@ public:
     float* d_data = nullptr;
 #endif
 
-    void fill(float value);
-    void randomize();
+    void fill(float value) const;
+    void randomize() const;
     void print() const;
     
     static Tensor matmul(const Tensor& A, const Tensor& B);
     static Tensor matadd(const Tensor& A, const Tensor& B);
 
-    void setRow(int row, std::vector<float>& values);
+    void setRow(size_t row, const std::vector<float>& values) const;
 
     [[nodiscard]] float get(size_t row, size_t col) const;
 

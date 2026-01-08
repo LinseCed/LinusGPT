@@ -37,7 +37,7 @@ void Vocab::readVocabFromFile(const std::string& filename) {
         TrieNode* node = trieRoot;
         std::vector<uint8_t> tokenBytes(token.begin(), token.end());
         for (uint8_t byte : tokenBytes) {
-            if (!node->children.count(byte)) {
+            if (!node->children.contains(byte)) {
                 node->children[byte] = new TrieNode();
             }
             node = node->children[byte];
@@ -81,7 +81,7 @@ std::vector<std::string> Vocab::tokenize(const std::string& input) const {
         TrieNode* node = trieRoot;
         int lastMatch = -1;
         size_t j = i;
-        while (j < bytes.size() && node->children.count(bytes[j])) {
+        while (j < bytes.size() && node->children.contains(bytes[j])) {
             node =  node->children.at(bytes[j]);
             if (node->isToken) lastMatch = j;
             j++;
@@ -91,7 +91,7 @@ std::vector<std::string> Vocab::tokenize(const std::string& input) const {
             tokens.emplace_back(bytes.begin() + i, bytes.begin() + lastMatch + 1);
             i = lastMatch + 1;
         } else {
-            tokens.push_back("<unk>");
+            tokens.emplace_back("<unk>");
             i++;
         }
     }
