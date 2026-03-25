@@ -104,8 +104,7 @@ std::vector<int> Vocab::encode(const std::string& text) const {
     ids.reserve(toks.size());
     
     for (size_t i = 0; i < toks.size(); i++) {
-        auto it = tokenToId.find(toks[i]);
-        if (it != tokenToId.end()) {
+        if (auto it = tokenToId.find(toks[i]); it != tokenToId.end()) {
             ids.push_back(it->second);
         } else {
             auto unkIt = tokenToId.find("<unk>");
@@ -115,7 +114,7 @@ std::vector<int> Vocab::encode(const std::string& text) const {
             ids.push_back(unkIt->second);
         }
 
-        if (toks.size() > 0) {
+        if (!toks.empty()) {
             std::cout << "Encoding: " << (i * 100 / toks.size()) << "% done\n";
         }
     }
