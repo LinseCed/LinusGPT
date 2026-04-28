@@ -1,16 +1,20 @@
 #include "llm/embedding.h"
 
-Embedding::Embedding(int vocabSize, int dim) : weight(vocabSize, dim), gradWeight(vocabSize, dim) {
-	weight.randomize();
-	gradWeight.fill(0);
+Embedding::Embedding(const int vocabSize, const int dim, const int contextLength) : tokenEmbedding(vocabSize, dim), gradientToken(vocabSize, dim), positionEmbedding(contextLength, dim), gradientPosition(contextLength, dim), dim(dim), contextLength(contextLength) {
+	tokenEmbedding.randomize();
+	gradientToken.fill(0);
+	positionEmbedding.randomize();
+	gradientPosition.fill(0);
 }
 
-Tensor Embedding::forward(std::vector<int> input, Vocab& vocab) {
-	this->input = input;
-	int n = input.size();
-	Tensor out(n, weight.getCols());
+Tensor Embedding::forward(const std::vector<int>& inputTokens) {
+	this->input = inputTokens;
+	const size_t n = inputTokens.size();
+	const Tensor tok(n, dim);
+	const Tensor pos(n, dim);
 	for (int i = 0; i < n; i++) {
-		// TODO setRow function on Tensor
+		tok.setRow(i, tokenEmbedding.getRow(inputTokens[i]));
+		pos.setRow(i, positionEmbedding.getRow(i));
 	}
-	return out;
+	return Tensor::matadd(tok, pos);
 }

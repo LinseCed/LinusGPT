@@ -23,10 +23,14 @@ public:
     
     static Tensor matmul(const Tensor& A, const Tensor& B);
     static Tensor matadd(const Tensor& A, const Tensor& B);
+    static Tensor transpose(const Tensor& A);
 
+    void scale(const Tensor& A, float scale) const;
     void setRow(size_t row, const std::vector<float>& values) const;
+    [[nodiscard]] std::vector<float> getRow(size_t row) const;
 
     [[nodiscard]] float get(size_t row, size_t col) const;
+    void set(size_t row, size_t col, float value) const;
 
 	[[nodiscard]] size_t getRows() const { return rows; }
 	[[nodiscard]] size_t getCols() const { return cols; }

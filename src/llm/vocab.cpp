@@ -78,7 +78,7 @@ std::vector<std::string> Vocab::tokenize(const std::string& input) const {
     std::vector<std::string> tokens;
     size_t i = 0;
     while (i < bytes.size()) {
-        TrieNode* node = trieRoot;
+        const TrieNode* node = trieRoot;
         int lastMatch = -1;
         size_t j = i;
         while (j < bytes.size() && node->children.contains(bytes[j])) {

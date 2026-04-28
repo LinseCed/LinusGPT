@@ -3,6 +3,9 @@
 #include <thread>
 
 #ifndef USE_CUDA
+
+constexpr size_t TILE = 32;
+
 Tensor::Tensor() : Tensor(0, 0) {}
 
 Tensor::Tensor(const size_t rows, const size_t cols) : rows(rows), cols(cols) {
@@ -14,7 +17,7 @@ Tensor::~Tensor() {
 }
 
 Tensor::Tensor(const Tensor& other) : rows(other.rows), cols(other.cols) {
-    if(other.data != nullptr) {
+    if(other.data == nullptr) {
         throw std::runtime_error("Tensor::Tensor(): other.data is null");
     }
     data = new float[rows * cols];
@@ -76,8 +79,9 @@ void Tensor::print() const {
 }
 
 Tensor Tensor::matmul(const Tensor& A, const Tensor& B) {
+#ifndef NDEBUG
     if (A.cols != B.rows) throw std::runtime_error("Matrix size mismatch");
-
+#endif
     Tensor C(A.rows, B.cols);
     auto worker = [&](const size_t start_row, const size_t end_row) {
         for (size_t i = start_row; i < end_row; i++) {
@@ -93,7 +97,7 @@ Tensor Tensor::matmul(const Tensor& A, const Tensor& B) {
 
     size_t num_threads = std::thread::hardware_concurrency();
     num_threads = num_threads == 0 ? 4 : num_threads;
-    size_t rows_per_thread = (A.rows + num_threads - 1)/ num_threads;
+    const size_t rows_per_thread = (A.rows + num_threads - 1)/ num_threads;
     
     std::vector<std::thread> threads;
     for (size_t t = 0; t < num_threads; t++) {
@@ -108,37 +112,72 @@ Tensor Tensor::matmul(const Tensor& A, const Tensor& B) {
 }
 
 Tensor Tensor::matadd(const Tensor& A, const Tensor& B) {
+#ifndef NDEBUG
     if (A.rows != B.rows || A.cols != B.cols) throw std::runtime_error("Matrix size mismatch");
+#endif
     Tensor C(A.rows, A.cols);
     auto worker = [&](const size_t start, const size_t end) {
         for (size_t i = start; i < end; i++)
             C.data[i] = A.data[i] + B.data[i];
     };
-    size_t total = A.rows * A.cols;
+    const size_t total = A.rows * A.cols;
     size_t num_threads = std::thread::hardware_concurrency();
     num_threads = num_threads == 0 ? 4 : num_threads;
-    size_t chunk = (total + num_threads - 1) / num_threads;
+    const size_t chunk = (total + num_threads - 1) / num_threads;
 
     std::vector<std::thread> threads;
     for (size_t t = 0; t < num_threads; t++) {
         size_t start = t * chunk;
-        size_t end = std::min(start + chunk, total);
-        if (start < end) threads.emplace_back(worker, start, end);
+        if (size_t end = std::min(start + chunk, total); start < end) threads.emplace_back(worker, start, end);
     }
     for (auto& th : threads) th.join();
     return C;
 }
 
+Tensor Tensor::transpose(const Tensor& A) {
+    for (size_t i = 0; i < A.rows; i++) {
+        for (size_t j = 0; j < A.cols; j++) {
+            for (size_t ii = i; ii < std::min(i + TILE, A.rows); ii++) {
+                for (size_t jj = j; jj < std::min(j + TILE,A.cols); jj++) {
+
+                }
+            }
+        }
+    }
+}
+
+void Tensor::scale(const Tensor& A, float scale) const {
+    for (size_t i = 0; i < A.cols; i++) {
+        for (size_t j = 0; j < A.rows; j++) {
+            data[i * cols + j] *= scale;
+        }
+    }
+}
+
 void Tensor::setRow(const size_t row, const std::vector<float>& values) const {
-	if (rows >= row) throw std::out_of_range("Row index out of range");
+#ifndef NDEBUG
+	if (rows <= row) throw std::out_of_range("Row index out of range");
     if (values.size() != cols) throw std::runtime_error("Row size mismatch");
+#endif
     std::ranges::copy(values, data + row * cols);
 }
 
+std::vector<float> Tensor::getRow(const size_t row) const {
+    return {data + row * cols, data + (row + 1) * cols};
+}
+
+
 float Tensor::get(const size_t row, const size_t col) const {
+#ifndef NDEBUG
     if (row >= rows) throw std::out_of_range("Row index out of range");
     if (col >= cols) throw std::out_of_range("Col index out of range");
+#endif
     return data[row * cols + col];
 }
+
+void Tensor::set(size_t row, size_t col, float value) const {
+    data[row * cols + col] = value;
+}
+
 
 #endif

@@ -28,6 +28,20 @@ inline Tensor softmax(const Tensor& logits) {
             expVals[j] /= sum;
         }
         result.setRow(i, std::vector<float>(expVals, expVals + n));
+        delete[] expVals;
     }
     return result;
+}
+
+inline double crossEntropyLoss(const Tensor& logits, const std::vector<int>& target) {
+    const int n = logits.getRows();
+    if (n != static_cast<int>(target.size())) {
+        throw std::runtime_error("logit dimension has to equal target dimension");
+    }
+    const Tensor probs = softmax(logits);
+    double loss = 0;
+    for (int i = 0; i < n; i++) {
+        loss += -std::log(probs.get(i, target[i]) + 1e-9);
+    }
+    return loss / n;
 }

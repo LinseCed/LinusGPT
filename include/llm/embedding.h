@@ -4,9 +4,11 @@
 
 class Embedding {
 public:
-    Embedding(int vocabSize, int dim);
-    Tensor forward(std::vector<int> input, Vocab& vocab);
+    Embedding(int vocabSize, int dim, int contextLength);
+    Tensor forward(const std::vector<int>& inputTokens);
 private:
-    Tensor weight, gradWeight;
+    Tensor tokenEmbedding, gradientToken;
+    Tensor positionEmbedding, gradientPosition;
     std::vector<int> input;
+    int dim, contextLength;
 };
