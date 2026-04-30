@@ -1,5 +1,5 @@
 #pragma once
-#include "llm/vocab.h"
+#include "llm/Vocab.h"
 #include "math/tensor.h"
 
 class Embedding {

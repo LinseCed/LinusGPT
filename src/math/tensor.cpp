@@ -9,55 +9,52 @@ constexpr size_t TILE = 32;
 Tensor::Tensor() : Tensor(0, 0) {}
 
 Tensor::Tensor(const size_t rows, const size_t cols) : rows(rows), cols(cols) {
-    data = new float[rows * cols];
+    data = (rows * cols > 0) ?  std::make_unique<float[]>(rows * cols) : nullptr;
 }
 
-Tensor::~Tensor() {
-    delete[] data;
-}
+Tensor::~Tensor() = default;
 
 Tensor::Tensor(const Tensor& other) : rows(other.rows), cols(other.cols) {
     if(other.data == nullptr) {
-        throw std::runtime_error("Tensor::Tensor(): other.data is null");
+        data = nullptr;
+        return;
     }
-    data = new float[rows * cols];
-    std::copy_n(other.data, rows * cols, data);
+    data = std::make_unique<float[]>(rows * cols);
+    std::copy_n(other.data.get(), rows * cols, data.get());
 }
 
 Tensor& Tensor::operator=(const Tensor& other) {
     if (this == &other) return *this;
-    delete[] data;
 
     rows = other.rows;
     cols = other.cols;
 
-    data = new float[rows * cols];
-    std::copy_n(other.data, rows * cols, data);
+    data = std::make_unique<float[]>(rows * cols);
+    std::copy_n(other.data.get(), rows * cols, data.get());
     return *this;
 }
 
-Tensor::Tensor(Tensor&& other) noexcept : data(other.data), rows(other.rows), cols(other.cols) {
+Tensor::Tensor(Tensor&& other) noexcept : data(other.data.get()), rows(other.rows), cols(other.cols) {
     other.rows = 0;
     other.cols = 0;
     other.data = nullptr;
 }
 
 Tensor& Tensor::operator=(Tensor&& other) noexcept {
-    if (this != &other) {
-        delete[] data;
-        rows = other.rows;
-        cols = other.cols;
-        data = other.data;
-
-        other.data = nullptr;
-        other.rows = 0;
-        other.cols = 0;
+    if (this == &other) return *this;
+    rows = other.rows;
+    cols = other.cols;
+    if (other.data == nullptr) {
+        data = nullptr;
+        return *this;
     }
+    data = std::make_unique<float[]>(rows * cols);
+    std::copy_n(other.data.get(), rows * cols, data.get());
     return *this;
 }
 
 void Tensor::fill(const float value) const {
-    std::fill_n(data, rows * cols, value);
+    std::fill_n(data.get(), rows * cols, value);
 }
 
 void Tensor::randomize() const {
@@ -134,21 +131,33 @@ Tensor Tensor::matadd(const Tensor& A, const Tensor& B) {
     return C;
 }
 
-Tensor Tensor::transpose(const Tensor& A) {
-    for (size_t i = 0; i < A.rows; i++) {
-        for (size_t j = 0; j < A.cols; j++) {
-            for (size_t ii = i; ii < std::min(i + TILE, A.rows); ii++) {
-                for (size_t jj = j; jj < std::min(j + TILE,A.cols); jj++) {
-
+Tensor Tensor::transpose() const {
+    Tensor result(cols, rows);
+    for (size_t i = 0; i < rows; i += TILE) {
+        for (size_t j = 0; j < cols; j += TILE) {
+            for (size_t ii = i; ii < std::min(i + TILE, rows); ii++) {
+                for (size_t jj = j; jj < std::min(j + TILE, cols); jj++) {
+                    result.set(jj, ii, data[ii * cols + jj]);
                 }
             }
         }
     }
+    return result;
 }
 
-void Tensor::scale(const Tensor& A, float scale) const {
-    for (size_t i = 0; i < A.cols; i++) {
-        for (size_t j = 0; j < A.rows; j++) {
+Tensor Tensor::slice(const size_t colStart, const size_t colEnd) const {
+    Tensor result(rows, colEnd - colStart);
+    if (result.data == nullptr) return result;
+    for (size_t i = 0; i < rows; i++) {
+        memcpy(result.data.get() + i * result.cols, data.get() + i * cols + colStart, result.cols * sizeof(float));
+    }
+    return result;
+}
+
+
+void Tensor::scale(float scale) const {
+    for (size_t i = 0; i < rows; i++) {
+        for (size_t j = 0; j < cols; j++) {
             data[i * cols + j] *= scale;
         }
     }
@@ -159,11 +168,11 @@ void Tensor::setRow(const size_t row, const std::vector<float>& values) const {
 	if (rows <= row) throw std::out_of_range("Row index out of range");
     if (values.size() != cols) throw std::runtime_error("Row size mismatch");
 #endif
-    std::ranges::copy(values, data + row * cols);
+    std::ranges::copy(values, data.get() + row * cols);
 }
 
 std::vector<float> Tensor::getRow(const size_t row) const {
-    return {data + row * cols, data + (row + 1) * cols};
+    return {data.get() + row * cols, data.get() + (row + 1) * cols};
 }
 
 
@@ -175,7 +184,7 @@ float Tensor::get(const size_t row, const size_t col) const {
     return data[row * cols + col];
 }
 
-void Tensor::set(size_t row, size_t col, float value) const {
+void Tensor::set(const size_t row, const size_t col, const float value) const {
     data[row * cols + col] = value;
 }
 

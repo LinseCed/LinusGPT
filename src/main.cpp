@@ -1,7 +1,7 @@
 #include "math/tensor.h"
 
-#include "llm/embedding.h"
-#include "llm/vocab.h"
+#include "llm/Embedding.h"
+#include "llm/Vocab.h"
 
 int main() {
   const int N = 5000;

@@ -1,4 +1,4 @@
-#include "llm/vocab.h"
+#include "llm/Vocab.h"
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
