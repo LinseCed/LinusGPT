@@ -10,21 +10,21 @@ RMSNorm::RMSNorm(const int dim) : gamma(dim, 1), gradientGamma(dim, 1), epsilon(
 }
 
 Tensor RMSNorm::forward(const Tensor& x) const {
-    const int n = x.getRows();
-    const int d = x.getCols();
+    const size_t n = x.getRows();
+    const size_t d = x.getCols();
     Tensor out(n, d);
 
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         auto row = x.getRow(i);
         float mean = 0.0;
-        for (float v : row) {
+        for (const float v : row) {
             mean += v * v;
         }
         mean /= static_cast<float>(d);
         const float rms = std::sqrt(mean + epsilon);
 
         std::vector<float> result(d);
-        for (int j = 0; j < d; j++) {
+        for (size_t j = 0; j < d; j++) {
             result[j] = gamma.get(j, 0) * row[j] / rms;
         }
         out.setRow(i, result);

@@ -22,7 +22,8 @@ file(GLOB_RECURSE SRC_CPP CONFIGURE_DEPENDS src/*.cpp)
 file(GLOB_RECURSE SRC_CU  CONFIGURE_DEPENDS src/*.cu)
 file(GLOB_RECURSE SRC_HPP CONFIGURE_DEPENDS include/*.h)
 
-set(SOURCES ${SRC_CPP} ${SRC_HPP} ${SRC_CU})
+set(SOURCES ${SRC_CPP} ${SRC_HPP} ${SRC_CU}
+        src/llm/Linear.cpp)
 
 # === Try to find CUDA if enabled ===
 if(USE_CUDA AND NOT FORCE_CPU)
